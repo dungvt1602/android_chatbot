@@ -19,6 +19,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -39,7 +40,9 @@ public class MainActivity extends AppCompatActivity {
 
     public static final MediaType JSON
             = MediaType.get("application/json; charset=utf-8");
-    OkHttpClient client = new OkHttpClient();
+    OkHttpClient client = new OkHttpClient.Builder()
+            .readTimeout(60, TimeUnit.SECONDS) // Thời gian timeout là 30 giây
+            .build();
 
 
     @Override
@@ -103,12 +106,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             jsonBody.put("model","text-davinci-003");
             jsonBody.put("prompt",question);
-            jsonBody.put("max_tokens",7);
+            jsonBody.put("max_tokens",2026);
             jsonBody.put("temperature",0);
-            jsonBody.put("top_p",1);
-            jsonBody.put("stream",false);
-            jsonBody.put("logprobs",null);
-            jsonBody.put("stop","\n");
 
 
         } catch (JSONException e) {
