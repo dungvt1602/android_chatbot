@@ -5,12 +5,20 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.DownloadManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,13 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
     RecyclerView recyclerView;
@@ -38,11 +39,6 @@ public class MainActivity extends AppCompatActivity {
 
     MessagerAdapter messagerAdapter;
 
-    public static final MediaType JSON
-            = MediaType.get("application/json; charset=utf-8");
-    OkHttpClient client = new OkHttpClient.Builder()
-            .readTimeout(60, TimeUnit.SECONDS) // Thời gian timeout là 30 giây
-            .build();
 
 
     @Override
@@ -102,50 +98,46 @@ public class MainActivity extends AppCompatActivity {
         //okhttp
         messagerList.add(new Messager("Đợi xíu....",Messager.SEND_BY_BOT));
 
-        JSONObject jsonBody = new JSONObject();
-        try {
-            jsonBody.put("model","text-davinci-003");
-            jsonBody.put("prompt",question);
-            jsonBody.put("max_tokens",2026);
-            jsonBody.put("temperature",0);
 
+        String url = "http://api.brainshop.ai/get?bid=175452&key=UZNMMF4E8JMd8vAL&uid=[uid]&msg=" + question;
 
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        // creating a variable for our request queue.
+        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
 
-        RequestBody body = RequestBody.create(jsonBody.toString(),JSON);
-        Request request = new Request.Builder()
-                .url("https://api.openai.com/v1/completions")
-                .header("Authorization","Bearer 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")
-                .post(body)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
+        // on below line we are making a json object request for a get request and passing our url .
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                addResponse("Không thể trả lời tin của bạn 1 "+e.getMessage() );
-            }
+            public void onResponse(JSONObject response) {
+                try {
+                    // in on response method we are extracting data
+                    // from json response and adding this response to our array list.
+                    String botResponse = response.getString("cnt");
+                    addResponse(botResponse);
 
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if(response.isSuccessful()){
-                    JSONObject jsonObject = null;
-                    try {
-                        jsonObject = new JSONObject(request.body().toString());
-                        JSONArray jsonArray = jsonObject.getJSONArray("choices");
-                        String result = jsonArray.getJSONObject(0).getString("text");
-                        addResponse(result.trim());
-                    } catch (JSONException e) {
-                        throw new RuntimeException(e);
-                    }
+                    // notifying our adapter as data changed.
+                    messagerAdapter.notifyDataSetChanged();
+                } catch (JSONException e) {
+                    e.printStackTrace();
 
-                }else {
-                    addResponse("Không thể trả lời tin của bạn 2 "+response.body().toString()+"  "+ response.code());
+                    // handling error response from bot.
+                    messagerList.remove(messagerList.size()-1);
+                    messagerList.add(new Messager("No response", Messager.SEND_BY_BOT));
+                    messagerAdapter.notifyDataSetChanged();
                 }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // error handling.
+                messagerList.remove(messagerList.size()-1);
+                messagerList.add(new Messager("Không tìm thấy", Messager.SEND_BY_BOT));
+                Toast.makeText(MainActivity.this, "No response from the bot..", Toast.LENGTH_SHORT).show();
             }
         });
 
-
+        // at last adding json object
+        // request to our queue.
+        queue.add(jsonObjectRequest);
     }
+
 }
