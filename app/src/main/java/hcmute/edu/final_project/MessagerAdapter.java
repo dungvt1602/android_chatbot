@@ -3,11 +3,14 @@ package hcmute.edu.final_project;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 
 import java.util.List;
 
@@ -32,7 +35,16 @@ public class MessagerAdapter extends RecyclerView.Adapter<MessagerAdapter.MyView
         if(messager.getSendBy().equals(Messager.SEND_BY_ME)){
             holder.leftLayoutView.setVisibility(View.GONE);
             holder.rightLayoutView.setVisibility(View.VISIBLE);
+            if(messager.bitmap != null)
+            {
+                holder.imageView.setImageBitmap(messager.getBitmap());
+
+            }
+            else {
+                holder.imageView.setVisibility(View.GONE);
+            }
             holder.rightChatView.setText(messager.getMessager());
+
         }else{
             holder.rightLayoutView.setVisibility(View.GONE);
             holder.leftLayoutView.setVisibility(View.VISIBLE);
@@ -48,6 +60,7 @@ public class MessagerAdapter extends RecyclerView.Adapter<MessagerAdapter.MyView
     public class MyViewHolder extends RecyclerView.ViewHolder{
 
         LinearLayout leftLayoutView , rightLayoutView;
+        ImageView imageView;
 
         TextView leftChatView , rightChatView;
         public MyViewHolder(@NonNull View itemView) {
@@ -56,6 +69,7 @@ public class MessagerAdapter extends RecyclerView.Adapter<MessagerAdapter.MyView
             leftChatView = itemView.findViewById(R.id.left_chat_text_view);
             rightLayoutView = itemView.findViewById(R.id.right_chat_view);
             rightChatView = itemView.findViewById(R.id.right_chat_text_view);
+            imageView = itemView.findViewById(R.id.image1);
         }
     }
 }
